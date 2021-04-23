@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 2.8.11)
 project(SyncSushi)
 
 add_library (SyncSushi sync_sushi.c)
+
 # adding pthreads flag and support
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
