@@ -7,5 +7,6 @@ typedef enum
 typedef struct
 {
   int id;
+  int hungry;
   State status;
 } Customer;
