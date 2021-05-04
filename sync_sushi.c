@@ -1,14 +1,16 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "customer.h"
 
 #define BAR_SIZE 5 // number of seats in the bar
 #define CUSTOMERS_SIZE 20 // number of customers;
 
-pthread_mutex_t mutex;
-sem_t block;
+pthread_mutex_t mutex; // blocks the usage of updating customers_eating and customers_waiting
+sem_t seats; // semaphore that tracks the amount of seats
+
 int customers_eating = 0;
 int customers_waiting = 0;
 int must_wait = 0;
@@ -16,26 +18,79 @@ int must_wait = 0;
 Customer customers[CUSTOMERS_SIZE]; // collection of customers;
 pthread_t customers_threads[CUSTOMERS_SIZE]; // collection of customers;
 
-void* dinner(void* arg) {}
+void* dinner(void* arg)
+{ 
+	Customer* customer = (Customer*) arg;
+	while(1)
+	{
+		pthread_mutex_lock(&mutex); // locks mutex
+		if(must_wait) // if bar is full, customer has to wait
+		{ 
+			customers_waiting += 1;
+			customer->status = waiting;
+			
+			pthread_mutex_unlock(&mutex); // releases mutex allowing counters update
+			sem_wait(&seats); // blocks thread until a seat becomes available
+
+			customers_waiting -= 1;
+		} 
+
+		customers_eating += 1;
+		customer->status = eating;
+		must_wait = (customers_eating == BAR_SIZE);
+		if(customers_waiting && !must_wait) 
+			sem_post(&seats); // a seat becomes available
+		else
+			pthread_mutex_unlock(&mutex); // releases mutex
+
+		pthread_mutex_lock(&mutex);
+		customers_eating -= 1;
+		// customer->status = waiting;
+		customer->hungry = 0;
+
+		if(customers_eating == 0)
+			must_wait = 0;
+		if(customers_waiting && !must_wait) 
+			sem_post(&seats); // a customer can seats at the bar
+		else
+			pthread_mutex_unlock(&mutex); // releases mutex		
+	}
+}
 
 int main()
 {
   for(int i=0; i < CUSTOMERS_SIZE; i++) 
   {
 	  customers[i].id = i;
+		customers[i].hungry = 1;
 	  customers[i].status = waiting;
-    printf("Customer { id: %d, status: %d } \n", customers[i].id, customers[i].status);
+		printf("{ id: %d, status: %d, hungry: %d } \n", customers[i].id, customers[i].status, customers[i].hungry);
 	}
 
   /* inicia o mutex */
 	pthread_mutex_init(&mutex, 0);
 
-  	/* inicia o semaphore block */
-	sem_init(&block, 0, 0);
+  	/* inicia o semaphore seats */
+	sem_init(&seats, 0, 0);
 
 	/* cria as Threads */
-	for(i=0;i<NO_OF_CUSTOMERS;i++) {
+	for(int i=0;i< CUSTOMERS_SIZE; i++) {
 		pthread_create(&customers_threads[i], 0, dinner, &customers[i]);
+	}
+
+	while(1)
+	{	
+		sleep(1);
+		printf("=================================\n");
+		printf("must_wait: %d\n", must_wait);
+		printf("customers eating: %d\n", customers_eating);
+		printf("customers waiting: %d\n", customers_waiting);
+
+		for(int i=0;i< CUSTOMERS_SIZE; i++)
+		{
+			printf("{ id: %d, status: %d, hungry: %d } \n", customers[i].id, customers[i].status, customers[i].hungry);
+		}
+		
 	}
   return 0;
 }
