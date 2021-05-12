@@ -1,12 +1,15 @@
 typedef enum
 {
   waiting,
-  eating
+  eating,
+  peeing
 } State;
 
 typedef struct
 {
   int id;
-  int hungry;
+  int starved;
+  int peemergency;
+  int usedRestroom;
   State status;
 } Customer;
