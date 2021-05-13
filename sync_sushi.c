@@ -52,16 +52,14 @@ void* dinner(void* arg)
 		else
 			pthread_mutex_unlock(&mutex); // releases mutex
 
-	
-		// if(customer->peemergency == 1)	-> with this verification, for some reason, nobody go to restroom 
-		// {
+		if(customer->peemergency == 1)
+		{
 			// toilet wait verification
 			pthread_mutex_lock(&mutex);
 			if(must_wait_toilet) 
 			{ 
 				customers_waiting_toilet += 1;
 				customer->status = waiting;
-				
 				pthread_mutex_unlock(&mutex); // releases mutex 
 				sem_wait(&toilet); // blocks thread until a toilet becomes available
 
@@ -81,14 +79,14 @@ void* dinner(void* arg)
 			// customer finish to toilet
 			pthread_mutex_lock(&mutex);
 			customers_in_restroom -= 1;
-			customer->peemergency = 0;
-			if (customers_in_restroom < 2)
+			// customer->peemergency = 0;
+			if (customers_in_restroom < RESTROOM_SIZE)
 				must_wait_toilet = 0;
 			if(customers_waiting_toilet && !must_wait_toilet) 
 				sem_post(&toilet); // a toilet becomes available
 			else
 				pthread_mutex_unlock(&mutex); // releases mutex
-		// }
+		}
 
 		// customer finish to eat
 		pthread_mutex_lock(&mutex);
@@ -132,17 +130,19 @@ int main()
 		sleep(1);
 		printf("\n");
 		printf("=============== Bar Table =================\n");
-		printf("must_wait_eat: %d\n", must_wait_eat);
 		printf("customers eating: %d\n", customers_eating);
 		printf("customers waiting to eat: %d\n", customers_waiting_eat);
 		printf("=============== Bar Restroom =================\n");
-		printf("must_wait_toilet: %d\n", must_wait_toilet);
 		printf("customers in toilet: %d\n", customers_in_restroom);
 		printf("customers waiting to toilet: %d\n", customers_waiting_toilet);
+		printf("=============== Legenda: =================\n");
+		printf("status = 0: esperando\n");
+		printf("status = 1: comendo\n");
+		printf("status = 2: no banheiro\n");
 
 		for(int i=0;i< CUSTOMERS_SIZE; i++)
 		{
-			printf("{ id: %d, status: %d, usedRestroom = %d, starved: %d } \n", customers[i].id, customers[i].status, customers[i].usedRestroom, customers[i].starved);
+			printf("{ id: %d, status: %d, starved: %d } \n", customers[i].id, customers[i].status, customers[i].starved);
 			customers[i].peemergency = rand() % 2; // create a 50% chance to have a peemergency
 			customers[i].usedRestroom = 0;	// reset the usedRestroom
 		}
