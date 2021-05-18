@@ -53,8 +53,8 @@ void* dinner(void* arg)
     int time_to_eat = rand() % 3 + 1;
     while (plates[customer->plate_index] > 0)
     {
-      plates[customer->plate_index] -= 1;
       sleep(time_to_eat);
+      plates[customer->plate_index] -= 1;
     }
     //plates[customer->plate_index] = 6;
     
@@ -107,10 +107,10 @@ int main()
 		printf("customers eating: %d\n", customers_eating);
 		printf("customers waiting: %d\n", customers_waiting);
 
-		for(int i=0;i< CUSTOMERS_SIZE; i++)
+		/*for(int i=0;i< CUSTOMERS_SIZE; i++)
 		{
 			printf("{ id: %d, status: %d, hungry: %d } \n", customers[i].id, customers[i].status, customers[i].hungry);
-		}
+		}*/
 		
 	}
   return 0;
